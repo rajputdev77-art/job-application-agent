@@ -1,0 +1,103 @@
+{
+  "name": "Scraper — Naukri.com",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "hours", "hoursInterval": 4}]
+        }
+      },
+      "id": "schedule-naukri",
+      "name": "Schedule: Every 4h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const searches = [\n  { keyword: 'customer-success-manager', location: 'delhi-ncr', label: 'CSM Delhi' },\n  { keyword: 'project-coordinator', location: 'delhi-ncr', label: 'PC Delhi' },\n  { keyword: 'client-operations', location: 'noida', label: 'ClientOps Noida' },\n  { keyword: 'operations-manager', location: 'delhi-ncr', label: 'Ops Delhi' },\n  { keyword: 'business-development-manager', location: 'delhi-ncr', label: 'BDM Delhi' },\n  { keyword: 'account-manager', location: 'delhi-ncr', label: 'AM Delhi' },\n  { keyword: 'business-analyst', location: 'delhi-ncr', label: 'BA Delhi' }\n];\n\nreturn searches.map(s => ({\n  json: {\n    url: `https://www.naukri.com/jobapi/v3/search?noOfResults=20&urlType=search_by_keyword&searchType=adv&keyword=${s.keyword}&location=${s.location}&pageNo=1&experience=2&exprangeFrom=2&exprangeTo=6&jobAge=1&sort=1`,\n    label: s.label,\n    source_platform: 'naukri'\n  }\n}));"
+      },
+      "id": "fn-build-naukri-urls",
+      "name": "Build Search URLs",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$json.url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "User-Agent", "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+            {"name": "appid", "value": "109"},
+            {"name": "systemid", "value": "109"},
+            {"name": "Accept", "value": "application/json"}
+          ]
+        },
+        "options": {"timeout": 15000}
+      },
+      "id": "http-fetch-naukri",
+      "name": "Fetch Naukri Results",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const response = $input.first().json;\nconst sourcePlatform = $('Build Search URLs').first().json.source_platform;\n\nconst jobs = [];\nconst listings = (response.jobDetails || response.jobs || []);\n\nfor (const job of listings) {\n  jobs.push({\n    job_id: job.jobId || job.id || '',\n    job_title: job.title || job.jobTitle || '',\n    company: job.companyName || job.company || '',\n    location: (job.placeholders && job.placeholders[1] && job.placeholders[1].label) || job.location || '',\n    job_url: job.jdURL || `https://www.naukri.com/job-listings-${job.jobId}`,\n    description: job.jobDescription || job.description || '',\n    source_platform: sourcePlatform\n  });\n}\n\nreturn jobs.map(j => ({ json: j }));"
+      },
+      "id": "fn-parse-naukri",
+      "name": "Parse Naukri Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const seen = $getWorkflowStaticData('global');\nif (!seen.naukriSeenUrls) seen.naukriSeenUrls = [];\n\nconst item = $input.first().json;\nif (seen.naukriSeenUrls.includes(item.job_url)) return [];\n\nseen.naukriSeenUrls.push(item.job_url);\nif (seen.naukriSeenUrls.length > 2000) seen.naukriSeenUrls = seen.naukriSeenUrls.slice(-1000);\n\nreturn [{ json: item }];"
+      },
+      "id": "fn-dedup-naukri",
+      "name": "Deduplicate",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:5678/webhook/score-job",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json)}}",
+        "options": {}
+      },
+      "id": "http-trigger-scorer-naukri",
+      "name": "Trigger Fit Scorer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Schedule: Every 4h": {
+      "main": [[{"node": "Build Search URLs", "type": "main", "index": 0}]]
+    },
+    "Build Search URLs": {
+      "main": [[{"node": "Fetch Naukri Results", "type": "main", "index": 0}]]
+    },
+    "Fetch Naukri Results": {
+      "main": [[{"node": "Parse Naukri Results", "type": "main", "index": 0}]]
+    },
+    "Parse Naukri Results": {
+      "main": [[{"node": "Deduplicate", "type": "main", "index": 0}]]
+    },
+    "Deduplicate": {
+      "main": [[{"node": "Trigger Fit Scorer", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "id": "naukri-scraper-workflow"
+}

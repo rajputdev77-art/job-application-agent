@@ -1,0 +1,181 @@
+{
+  "name": "CV Builder — Tailor + Cover Letter",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "build-cv",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-build-cv",
+      "name": "Webhook: /build-cv",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst data = $input.first().json.body || $input.first().json;\nconst variant = (data.cv_variant || 'A').toUpperCase();\n\nconst cvFile = variant === 'B' ? 'cv_variant_b.md' : 'cv_variant_a.md';\nconst cvPath = path.join(process.cwd(), 'cv', cvFile);\nconst tailorPromptPath = path.join(process.cwd(), 'prompts', 'cv_tailor.md');\n\nlet baseCv, tailorPrompt;\ntry {\n  baseCv = fs.readFileSync(cvPath, 'utf-8');\n  tailorPrompt = fs.readFileSync(tailorPromptPath, 'utf-8');\n} catch (e) {\n  throw new Error(`File read error: ${e.message}`);\n}\n\nconst userMessage = `JOB DESCRIPTION:\\n${data.description}\\n\\n---\\n\\nBASE CV:\\n${baseCv}`;\n\nreturn [{\n  json: {\n    ...data,\n    baseCv,\n    tailorPrompt,\n    userMessage,\n    cvVariant: variant\n  }\n}];"
+      },
+      "id": "fn-select-cv",
+      "name": "Select CV Variant",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}"},
+            {"name": "anthropic-version", "value": "2023-06-01"},
+            {"name": "content-type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 2000,\n  \"system\": \"{{$json.tailorPrompt}}\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"{{$json.userMessage}}\"}]\n}",
+        "options": {"timeout": 60000}
+      },
+      "id": "http-claude-cv",
+      "name": "Claude API — Tailor CV",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst response = $input.first().json;\nconst tailoredCv = response.content && response.content[0] && response.content[0].text;\n\nif (!tailoredCv) throw new Error('Claude returned empty CV');\n\nconst prev = $('Select CV Variant').first().json;\nconst ts = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `tailored_cv_${prev.company}_${prev.job_title}_${ts}.md`\n  .replace(/[^a-zA-Z0-9_.-]/g, '_');\n\nconst outputDir = path.join(process.cwd(), 'output');\nif (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });\n\nconst filePath = path.join(outputDir, filename);\nfs.writeFileSync(filePath, tailoredCv, 'utf-8');\n\nreturn [{ json: { ...prev, tailoredCvPath: filePath, tailoredCvFilename: filename } }];"
+      },
+      "id": "fn-save-cv",
+      "name": "Save Tailored CV",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.cover_letter_needed}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-cover-letter",
+      "name": "IF: Cover Letter Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst data = $input.first().json;\nconst clPromptPath = path.join(process.cwd(), 'prompts', 'cover_letter.md');\nconst clPrompt = fs.readFileSync(clPromptPath, 'utf-8');\n\nconst userMessage = `Company: ${data.company}\\nJob Title: ${data.job_title}\\nLocation: ${data.location}\\n\\nJob Description:\\n${data.description}\\n\\nTop Matching Signals:\\n${(data.top_matches || []).join('\\n')}`;\n\nreturn [{ json: { ...data, clPrompt, clUserMessage: userMessage } }];"
+      },
+      "id": "fn-build-cl-prompt",
+      "name": "Build CL Prompt",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}"},
+            {"name": "anthropic-version", "value": "2023-06-01"},
+            {"name": "content-type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 800,\n  \"system\": \"{{$json.clPrompt}}\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"{{$json.clUserMessage}}\"}]\n}",
+        "options": {"timeout": 30000}
+      },
+      "id": "http-claude-cl",
+      "name": "Claude API — Cover Letter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst response = $input.first().json;\nconst clText = response.content && response.content[0] && response.content[0].text;\n\nif (!clText) throw new Error('Claude returned empty cover letter');\n\nconst prev = $('Build CL Prompt').first().json;\nconst ts = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `cover_letter_${prev.company}_${prev.job_title}_${ts}.txt`\n  .replace(/[^a-zA-Z0-9_.-]/g, '_');\n\nconst filePath = path.join(process.cwd(), 'output', filename);\nfs.writeFileSync(filePath, clText, 'utf-8');\n\nreturn [{ json: { ...prev, coverLetterPath: filePath, coverLetterFilename: filename, coverLetterSent: true } }];"
+      },
+      "id": "fn-save-cl",
+      "name": "Save Cover Letter",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $input.first().json;\nconst platform = (data.source_platform || '').toLowerCase();\n\nlet targetWebhook;\nif (['capgemini', 'accenture', 'jll', 'cbre', 'ey', 'tier1'].some(t => platform.includes(t))) {\n  targetWebhook = 'apply-tier1';\n} else if (['linkedin_eu', 'indeed_eu', 'wttj', 'eurojobs', 'glassdoor_eu'].some(t => platform.includes(t))) {\n  targetWebhook = 'apply-abroad';\n} else {\n  targetWebhook = 'apply-india';\n}\n\nreturn [{ json: { ...data, targetWebhook } }];"
+      },
+      "id": "fn-route-executor",
+      "name": "Route to Executor",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:5678/webhook/{{$json.targetWebhook}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json)}}",
+        "options": {}
+      },
+      "id": "http-trigger-executor",
+      "name": "Trigger Executor Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2220, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: /build-cv": {
+      "main": [[{"node": "Select CV Variant", "type": "main", "index": 0}]]
+    },
+    "Select CV Variant": {
+      "main": [[{"node": "Claude API — Tailor CV", "type": "main", "index": 0}]]
+    },
+    "Claude API — Tailor CV": {
+      "main": [[{"node": "Save Tailored CV", "type": "main", "index": 0}]]
+    },
+    "Save Tailored CV": {
+      "main": [[{"node": "IF: Cover Letter Needed?", "type": "main", "index": 0}]]
+    },
+    "IF: Cover Letter Needed?": {
+      "main": [
+        [{"node": "Build CL Prompt", "type": "main", "index": 0}],
+        [{"node": "Route to Executor", "type": "main", "index": 0}]
+      ]
+    },
+    "Build CL Prompt": {
+      "main": [[{"node": "Claude API — Cover Letter", "type": "main", "index": 0}]]
+    },
+    "Claude API — Cover Letter": {
+      "main": [[{"node": "Save Cover Letter", "type": "main", "index": 0}]]
+    },
+    "Save Cover Letter": {
+      "main": [[{"node": "Route to Executor", "type": "main", "index": 0}]]
+    },
+    "Route to Executor": {
+      "main": [[{"node": "Trigger Executor Agent", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "id": "cv-builder-workflow"
+}

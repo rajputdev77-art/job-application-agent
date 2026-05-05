@@ -1,0 +1,8 @@
+.env
+output/
+node_modules/
+playwright/node_modules/
+*.png
+*.pdf
+naukri_auth.json
+linkedin_auth.json

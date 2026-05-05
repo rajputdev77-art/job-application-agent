@@ -1,0 +1,14 @@
+{
+  "name": "job-agent-playwright",
+  "version": "1.0.0",
+  "description": "Playwright scripts for job application automation",
+  "scripts": {
+    "test": "node ../setup/test_scorer.js",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.44.0",
+    "dotenv": "^16.4.5",
+    "minimist": "^1.2.8"
+  }
+}

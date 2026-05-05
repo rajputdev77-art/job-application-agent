@@ -1,0 +1,92 @@
+{
+  "name": "Scraper — Welcome to the Jungle",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "hours", "hoursInterval": 6}]
+        }
+      },
+      "id": "schedule-wttj",
+      "name": "Schedule: Every 6h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const searches = [\n  { query: 'Customer Success', aroundQuery: 'Europe' },\n  { query: 'Operations Manager', aroundQuery: 'Netherlands' },\n  { query: 'Project Manager', aroundQuery: 'Germany' },\n  { query: 'Business Development', aroundQuery: 'Europe' },\n  { query: 'Business Analyst', aroundQuery: 'United Kingdom' }\n];\n\nreturn searches.map(s => ({\n  json: {\n    url: `https://api.welcometothejungle.com/api/v1/jobs?query=${encodeURIComponent(s.query)}&around_query=${encodeURIComponent(s.aroundQuery)}&contract_type=full_time&page=1&per_page=20`,\n    source_platform: 'wttj'\n  }\n}));"
+      },
+      "id": "fn-build-wttj-urls",
+      "name": "Build Search URLs",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$json.url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "User-Agent", "value": "Mozilla/5.0"},
+            {"name": "Accept", "value": "application/json"},
+            {"name": "Accept-Language", "value": "en-US,en;q=0.9"}
+          ]
+        },
+        "options": {"timeout": 15000}
+      },
+      "id": "http-fetch-wttj",
+      "name": "Fetch WTTJ Results",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const response = $input.first().json;\nconst jobs = response.jobs || response.data || response.results || [];\n\nreturn jobs.map(job => ({\n  json: {\n    job_id: job.slug || job.id || '',\n    job_title: job.name || job.title || '',\n    company: (job.organization && job.organization.name) || job.company || '',\n    location: (job.office && job.office.city) || job.location || 'Europe',\n    job_url: job.url || `https://www.welcometothejungle.com/jobs/${job.slug}`,\n    description: (job.description || job.profile || '').replace(/<[^>]+>/g, ' ').trim().substring(0, 3000),\n    source_platform: 'wttj'\n  }\n}));"
+      },
+      "id": "fn-parse-wttj",
+      "name": "Parse WTTJ Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const seen = $getWorkflowStaticData('global');\nif (!seen.wttjSeenIds) seen.wttjSeenIds = [];\n\nconst item = $input.first().json;\nif (seen.wttjSeenIds.includes(item.job_id)) return [];\n\nseen.wttjSeenIds.push(item.job_id);\nif (seen.wttjSeenIds.length > 2000) seen.wttjSeenIds = seen.wttjSeenIds.slice(-1000);\n\nreturn [{ json: item }];"
+      },
+      "id": "fn-dedup-wttj",
+      "name": "Deduplicate",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:5678/webhook/score-job",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json)}}",
+        "options": {}
+      },
+      "id": "http-trigger-scorer-wttj",
+      "name": "Trigger Fit Scorer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Schedule: Every 6h": {"main": [[{"node": "Build Search URLs", "type": "main", "index": 0}]]},
+    "Build Search URLs": {"main": [[{"node": "Fetch WTTJ Results", "type": "main", "index": 0}]]},
+    "Fetch WTTJ Results": {"main": [[{"node": "Parse WTTJ Results", "type": "main", "index": 0}]]},
+    "Parse WTTJ Results": {"main": [[{"node": "Deduplicate", "type": "main", "index": 0}]]},
+    "Deduplicate": {"main": [[{"node": "Trigger Fit Scorer", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "id": "wttj-scraper-workflow"
+}
