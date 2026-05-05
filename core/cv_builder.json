@@ -1,5 +1,5 @@
 {
-  "name": "CV Builder — Tailor + Cover Letter",
+  "name": "CV Builder — Ollama (Qwen)",
   "nodes": [
     {
       "parameters": {
@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst data = $input.first().json.body || $input.first().json;\nconst variant = (data.cv_variant || 'A').toUpperCase();\n\nconst cvFile = variant === 'B' ? 'cv_variant_b.md' : 'cv_variant_a.md';\nconst cvPath = path.join(process.cwd(), 'cv', cvFile);\nconst tailorPromptPath = path.join(process.cwd(), 'prompts', 'cv_tailor.md');\n\nlet baseCv, tailorPrompt;\ntry {\n  baseCv = fs.readFileSync(cvPath, 'utf-8');\n  tailorPrompt = fs.readFileSync(tailorPromptPath, 'utf-8');\n} catch (e) {\n  throw new Error(`File read error: ${e.message}`);\n}\n\nconst userMessage = `JOB DESCRIPTION:\\n${data.description}\\n\\n---\\n\\nBASE CV:\\n${baseCv}`;\n\nreturn [{\n  json: {\n    ...data,\n    baseCv,\n    tailorPrompt,\n    userMessage,\n    cvVariant: variant\n  }\n}];"
+        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst data = $input.first().json.body || $input.first().json;\nconst variant = (data.cv_variant || 'A').toUpperCase();\n\nconst cvFile = variant === 'B' ? 'cv_variant_b.md' : 'cv_variant_a.md';\nconst cvPath = path.join(process.cwd(), 'cv', cvFile);\nconst tailorPromptPath = path.join(process.cwd(), 'prompts', 'cv_tailor.md');\n\nconst baseCv = fs.readFileSync(cvPath, 'utf-8');\nconst tailorPrompt = fs.readFileSync(tailorPromptPath, 'utf-8');\n\nconst userMessage = `JOB DESCRIPTION:\\n${data.description}\\n\\n---\\n\\nBASE CV:\\n${baseCv}`;\n\nreturn [{\n  json: { ...data, baseCv, tailorPrompt, userMessage, cvVariant: variant }\n}];"
       },
       "id": "fn-select-cv",
       "name": "Select CV Variant",
@@ -27,29 +27,25 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
+        "url": "=http://localhost:11434/api/chat",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            {"name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}"},
-            {"name": "anthropic-version", "value": "2023-06-01"},
-            {"name": "content-type", "value": "application/json"}
-          ]
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 2000,\n  \"system\": \"{{$json.tailorPrompt}}\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"{{$json.userMessage}}\"}]\n}",
-        "options": {"timeout": 60000}
+        "jsonBody": "={\n  \"model\": \"qwen2.5:7b-instruct\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": {{JSON.stringify($json.tailorPrompt)}}},\n    {\"role\": \"user\", \"content\": {{JSON.stringify($json.userMessage)}}}\n  ],\n  \"stream\": false,\n  \"options\": {\"temperature\": 0.5, \"num_predict\": 2500}\n}",
+        "options": {"timeout": 240000}
       },
-      "id": "http-claude-cv",
-      "name": "Claude API — Tailor CV",
+      "id": "http-ollama-cv",
+      "name": "Ollama — Tailor CV",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [680, 300]
     },
     {
       "parameters": {
-        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst response = $input.first().json;\nconst tailoredCv = response.content && response.content[0] && response.content[0].text;\n\nif (!tailoredCv) throw new Error('Claude returned empty CV');\n\nconst prev = $('Select CV Variant').first().json;\nconst ts = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `tailored_cv_${prev.company}_${prev.job_title}_${ts}.md`\n  .replace(/[^a-zA-Z0-9_.-]/g, '_');\n\nconst outputDir = path.join(process.cwd(), 'output');\nif (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });\n\nconst filePath = path.join(outputDir, filename);\nfs.writeFileSync(filePath, tailoredCv, 'utf-8');\n\nreturn [{ json: { ...prev, tailoredCvPath: filePath, tailoredCvFilename: filename } }];"
+        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst response = $input.first().json;\nconst tailoredCv = (response.message && response.message.content) || response.response || '';\n\nif (!tailoredCv) throw new Error('Ollama returned empty CV');\n\nconst prev = $('Select CV Variant').first().json;\nconst ts = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `tailored_cv_${prev.company}_${prev.job_title}_${ts}.md`\n  .replace(/[^a-zA-Z0-9_.-]/g, '_');\n\nconst outputDir = path.join(process.cwd(), 'output');\nif (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });\n\nconst filePath = path.join(outputDir, filename);\nfs.writeFileSync(filePath, tailoredCv, 'utf-8');\n\nreturn [{ json: { ...prev, tailoredCvPath: filePath, tailoredCvFilename: filename } }];"
       },
       "id": "fn-save-cv",
       "name": "Save Tailored CV",
@@ -60,12 +56,7 @@
     {
       "parameters": {
         "conditions": {
-          "boolean": [
-            {
-              "value1": "={{$json.cover_letter_needed}}",
-              "value2": true
-            }
-          ]
+          "boolean": [{"value1": "={{$json.cover_letter_needed}}", "value2": true}]
         }
       },
       "id": "if-cover-letter",
@@ -87,29 +78,25 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
+        "url": "=http://localhost:11434/api/chat",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            {"name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}"},
-            {"name": "anthropic-version", "value": "2023-06-01"},
-            {"name": "content-type", "value": "application/json"}
-          ]
+          "parameters": [{"name": "Content-Type", "value": "application/json"}]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 800,\n  \"system\": \"{{$json.clPrompt}}\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"{{$json.clUserMessage}}\"}]\n}",
-        "options": {"timeout": 30000}
+        "jsonBody": "={\n  \"model\": \"qwen2.5:7b-instruct\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": {{JSON.stringify($json.clPrompt)}}},\n    {\"role\": \"user\", \"content\": {{JSON.stringify($json.clUserMessage)}}}\n  ],\n  \"stream\": false,\n  \"options\": {\"temperature\": 0.6, \"num_predict\": 800}\n}",
+        "options": {"timeout": 120000}
       },
-      "id": "http-claude-cl",
-      "name": "Claude API — Cover Letter",
+      "id": "http-ollama-cl",
+      "name": "Ollama — Cover Letter",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1560, 200]
     },
     {
       "parameters": {
-        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst response = $input.first().json;\nconst clText = response.content && response.content[0] && response.content[0].text;\n\nif (!clText) throw new Error('Claude returned empty cover letter');\n\nconst prev = $('Build CL Prompt').first().json;\nconst ts = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `cover_letter_${prev.company}_${prev.job_title}_${ts}.txt`\n  .replace(/[^a-zA-Z0-9_.-]/g, '_');\n\nconst filePath = path.join(process.cwd(), 'output', filename);\nfs.writeFileSync(filePath, clText, 'utf-8');\n\nreturn [{ json: { ...prev, coverLetterPath: filePath, coverLetterFilename: filename, coverLetterSent: true } }];"
+        "functionCode": "const fs = require('fs');\nconst path = require('path');\n\nconst response = $input.first().json;\nconst clText = (response.message && response.message.content) || response.response || '';\n\nif (!clText) throw new Error('Ollama returned empty cover letter');\n\nconst prev = $('Build CL Prompt').first().json;\nconst ts = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `cover_letter_${prev.company}_${prev.job_title}_${ts}.txt`\n  .replace(/[^a-zA-Z0-9_.-]/g, '_');\n\nconst filePath = path.join(process.cwd(), 'output', filename);\nfs.writeFileSync(filePath, clText, 'utf-8');\n\nreturn [{ json: { ...prev, coverLetterPath: filePath, coverLetterFilename: filename, coverLetterSent: true } }];"
       },
       "id": "fn-save-cl",
       "name": "Save Cover Letter",
@@ -144,36 +131,20 @@
     }
   ],
   "connections": {
-    "Webhook: /build-cv": {
-      "main": [[{"node": "Select CV Variant", "type": "main", "index": 0}]]
-    },
-    "Select CV Variant": {
-      "main": [[{"node": "Claude API — Tailor CV", "type": "main", "index": 0}]]
-    },
-    "Claude API — Tailor CV": {
-      "main": [[{"node": "Save Tailored CV", "type": "main", "index": 0}]]
-    },
-    "Save Tailored CV": {
-      "main": [[{"node": "IF: Cover Letter Needed?", "type": "main", "index": 0}]]
-    },
+    "Webhook: /build-cv": {"main": [[{"node": "Select CV Variant", "type": "main", "index": 0}]]},
+    "Select CV Variant": {"main": [[{"node": "Ollama — Tailor CV", "type": "main", "index": 0}]]},
+    "Ollama — Tailor CV": {"main": [[{"node": "Save Tailored CV", "type": "main", "index": 0}]]},
+    "Save Tailored CV": {"main": [[{"node": "IF: Cover Letter Needed?", "type": "main", "index": 0}]]},
     "IF: Cover Letter Needed?": {
       "main": [
         [{"node": "Build CL Prompt", "type": "main", "index": 0}],
         [{"node": "Route to Executor", "type": "main", "index": 0}]
       ]
     },
-    "Build CL Prompt": {
-      "main": [[{"node": "Claude API — Cover Letter", "type": "main", "index": 0}]]
-    },
-    "Claude API — Cover Letter": {
-      "main": [[{"node": "Save Cover Letter", "type": "main", "index": 0}]]
-    },
-    "Save Cover Letter": {
-      "main": [[{"node": "Route to Executor", "type": "main", "index": 0}]]
-    },
-    "Route to Executor": {
-      "main": [[{"node": "Trigger Executor Agent", "type": "main", "index": 0}]]
-    }
+    "Build CL Prompt": {"main": [[{"node": "Ollama — Cover Letter", "type": "main", "index": 0}]]},
+    "Ollama — Cover Letter": {"main": [[{"node": "Save Cover Letter", "type": "main", "index": 0}]]},
+    "Save Cover Letter": {"main": [[{"node": "Route to Executor", "type": "main", "index": 0}]]},
+    "Route to Executor": {"main": [[{"node": "Trigger Executor Agent", "type": "main", "index": 0}]]}
   },
   "active": false,
   "settings": {"executionOrder": "v1"},

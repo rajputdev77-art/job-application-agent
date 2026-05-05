@@ -2,7 +2,6 @@ const http = require('http');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-// Sample job posting — Customer Success Manager at Capgemini India
 const sampleJob = {
   job_title: 'Customer Success Manager',
   company: 'Capgemini India',
@@ -10,7 +9,6 @@ const sampleJob = {
   source_platform: 'tier1_capgemini',
   job_url: 'https://www.capgemini.com/jobs/sample-csm-india',
   description: `
-    About the role:
     We are looking for a Customer Success Manager to join our Digital Transformation team in Delhi NCR.
 
     Responsibilities:
@@ -26,12 +24,6 @@ const sampleJob = {
     - MBA preferred
     - Strong communication and stakeholder management skills
     - Experience with CRM tools (Salesforce, HubSpot, or similar)
-    - Ability to manage multiple accounts simultaneously
-    - Excellent presentation and documentation skills
-
-    Nice to have:
-    - Experience with AI or automation tools
-    - Project management certification (PMP, PRINCE2)
 
     Location: Delhi NCR | Type: Full-time | Experience: 2-4 years
   `
@@ -40,10 +32,11 @@ const sampleJob = {
 const N8N_URL = process.env.N8N_WEBHOOK_URL || 'http://localhost:5678';
 
 console.log('\n===========================================');
-console.log('  Job Agent — Fit Scorer Test');
+console.log('  Job Agent — Fit Scorer Test (Ollama+Qwen)');
 console.log('===========================================\n');
 console.log(`Testing against: ${N8N_URL}/webhook/score-job`);
-console.log(`Sample job: ${sampleJob.job_title} at ${sampleJob.company}\n`);
+console.log(`Sample job: ${sampleJob.job_title} at ${sampleJob.company}`);
+console.log('Note: Local Ollama inference takes 30-90 seconds per request.\n');
 
 const postData = JSON.stringify(sampleJob);
 
@@ -65,47 +58,36 @@ const req = http.request(options, (res) => {
     console.log(`Status: ${res.statusCode}`);
     try {
       const result = JSON.parse(data);
+      const r = Array.isArray(result) ? (result[0]?.json || result[0]) : result;
       console.log('\nScore Response:');
       console.log('---------------');
-      console.log(`Score:       ${result.score || result[0]?.json?.score || 'N/A'}`);
-      console.log(`Verdict:     ${result.verdict || result[0]?.json?.verdict || 'N/A'}`);
-      console.log(`CV Variant:  ${result.cv_variant || result[0]?.json?.cv_variant || 'N/A'}`);
-      console.log(`Cover Letter: ${result.cover_letter_needed || result[0]?.json?.cover_letter_needed || 'N/A'}`);
+      console.log(`Score:        ${r.score ?? 'N/A'}`);
+      console.log(`Verdict:      ${r.verdict ?? 'N/A'}`);
+      console.log(`CV Variant:   ${r.cv_variant ?? 'N/A'}`);
+      console.log(`Cover Letter: ${r.cover_letter_needed ?? 'N/A'}`);
 
-      const matches = result.top_matches || result[0]?.json?.top_matches || [];
-      if (matches.length) {
+      if (r.top_matches?.length) {
         console.log('\nTop Matches:');
-        matches.forEach(m => console.log(`  - ${m}`));
-      }
-
-      const gaps = result.gaps || result[0]?.json?.gaps || [];
-      if (gaps.length) {
-        console.log('\nGaps:');
-        gaps.forEach(g => console.log(`  - ${g}`));
+        r.top_matches.forEach(m => console.log(`  - ${m}`));
       }
 
       console.log('\n===========================================');
       console.log('  System is working correctly!');
       console.log('===========================================\n');
     } catch (e) {
-      console.log('Raw response:', data);
-      console.log('\nNote: If you see a valid response above, the system is working.');
-      console.log('The scorer returns data via n8n webhook — check your n8n execution log for the full score.');
+      console.log('Raw response:', data.substring(0, 500));
     }
   });
 });
 
 req.on('error', (err) => {
-  console.error('\nERROR: Could not connect to n8n');
-  console.error(`Details: ${err.message}`);
-  console.error('\nMake sure n8n is running: npx n8n');
-  console.error('And the fit_scorer workflow is imported and ACTIVE in n8n UI');
+  console.error(`\nERROR: ${err.message}`);
+  console.error('Make sure n8n is running and the fit_scorer workflow is ACTIVE.');
   process.exit(1);
 });
 
-req.setTimeout(15000, () => {
-  console.error('\nERROR: Request timed out after 15s');
-  console.error('Check n8n is running and the fit_scorer workflow is active');
+req.setTimeout(180000, () => {
+  console.error('\nERROR: Request timed out after 3min (Ollama inference too slow)');
   req.destroy();
   process.exit(1);
 });
