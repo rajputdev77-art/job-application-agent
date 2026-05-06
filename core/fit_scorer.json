@@ -62,13 +62,13 @@
             {
               "value1": "={{$json.score}}",
               "operation": "largerEqual",
-              "value2": 60
+              "value2": 70
             }
           ]
         }
       },
       "id": "if-threshold",
-      "name": "IF: Score >= 60?",
+      "name": "IF: Score >= 70?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [1120, 300]
@@ -108,8 +108,8 @@
     "Webhook: /score-job": {"main": [[{"node": "Build Prompt", "type": "main", "index": 0}]]},
     "Build Prompt": {"main": [[{"node": "Ollama — Score", "type": "main", "index": 0}]]},
     "Ollama — Score": {"main": [[{"node": "Parse Score", "type": "main", "index": 0}]]},
-    "Parse Score": {"main": [[{"node": "IF: Score >= 60?", "type": "main", "index": 0}]]},
-    "IF: Score >= 60?": {
+    "Parse Score": {"main": [[{"node": "IF: Score >= 70?", "type": "main", "index": 0}]]},
+    "IF: Score >= 70?": {
       "main": [
         [{"node": "Trigger CV Builder", "type": "main", "index": 0}],
         [{"node": "Log Rejection", "type": "main", "index": 0}]
