@@ -1,3 +1,6 @@
+// LinkedIn Easy Apply — fully autonomous after one-time auth save.
+// Loads saved cookies from linkedin_auth.json (run save_linkedin_auth.js first).
+
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -9,191 +12,192 @@ const APPLICANT = {
   email: 'rajputdev77@gmail.com',
   phone: '+91-9810893714',
   location: 'Delhi NCR, India',
-  linkedin: 'linkedin.com/in/devrajput07',
-  years_experience: '3',
-  authorized_india: 'Yes',
-  require_sponsorship: 'No',
-  willing_to_relocate: 'Yes'
+  years_experience: '3'
 };
 
 const jobUrl = args.url;
 const cvPath = args.cv;
-const coverLetterPath = args.coverletter;
+const company = args.company || 'unknown';
+const jobTitle = args.title || 'unknown';
+const dryRun = args['dry-run'] === true || args['dry-run'] === 'true';
 const isEu = args.eu === true || args.eu === 'true';
+
 const outputDir = path.join(__dirname, '..', 'output');
+const authPath = path.join(__dirname, 'linkedin_auth.json');
 
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
-function ts() {
-  return new Date().toISOString().replace(/[:.]/g, '-');
-}
+function ts() { return new Date().toISOString().replace(/[:.]/g, '-'); }
+function out(obj) { console.log(JSON.stringify(obj)); }
 
-async function run() {
-  if (!jobUrl) {
-    console.log(JSON.stringify({ success: false, error: 'No --url provided' }));
-    process.exit(1);
+(async () => {
+  if (!jobUrl) return out({ success: false, error: 'No --url provided' });
+
+  // Verify auth file exists
+  if (!fs.existsSync(authPath)) {
+    return out({
+      success: false,
+      error: 'No LinkedIn auth saved. Run: node playwright/save_linkedin_auth.js',
+      action_required: 'one_time_login'
+    });
   }
 
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-  });
-
-  // Load saved auth state if it exists (for logged-in LinkedIn session)
-  const authStatePath = path.join(__dirname, 'linkedin_auth.json');
-  if (fs.existsSync(authStatePath)) {
-    try {
-      const authState = JSON.parse(fs.readFileSync(authStatePath, 'utf-8'));
-      await context.addCookies(authState.cookies || []);
-    } catch (e) {
-      // Auth state invalid — continue without it
-    }
-  }
-
-  const page = await context.newPage();
+  const browser = await chromium.launch({ headless: !dryRun });
   const screenshots = [];
 
-  async function screenshot(label) {
-    try {
-      const fp = path.join(outputDir, `linkedin_${label}_${ts()}.png`);
-      await page.screenshot({ path: fp, fullPage: false });
-      screenshots.push(fp);
-      return fp;
-    } catch (_) {
-      return null;
-    }
-  }
-
   try {
+    const context = await browser.newContext({
+      storageState: authPath,
+      viewport: { width: 1280, height: 800 },
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    });
+    const page = await context.newPage();
+
+    async function screenshot(label) {
+      try {
+        const fp = path.join(outputDir, `linkedin_${company.replace(/[^a-zA-Z0-9]/g, '_')}_${label}_${ts()}.png`);
+        await page.screenshot({ path: fp });
+        screenshots.push(fp);
+        return fp;
+      } catch (_) { return null; }
+    }
+
+    // Navigate to job
     await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(2500);
     await screenshot('01_job_page');
 
-    // Find Easy Apply button
-    const easyApplyBtn = page.locator('button:has-text("Easy Apply"), .jobs-apply-button--top-card button, [data-control-name="jobdetails_topcard_inapply"]').first();
-    const easyApplyVisible = await easyApplyBtn.isVisible({ timeout: 8000 }).catch(() => false);
-
-    if (!easyApplyVisible) {
-      await screenshot('02_no_easy_apply');
+    // Check if logged in (no "Join now" button)
+    const notLoggedIn = await page.locator('text=/Join now|Sign in/i').first().isVisible({ timeout: 2000 }).catch(() => false);
+    if (notLoggedIn) {
       await browser.close();
-      console.log(JSON.stringify({ success: false, error: 'Easy Apply button not found — may require external application', screenshot: screenshots[0] }));
-      return;
+      return out({ success: false, error: 'LinkedIn session expired. Re-run save_linkedin_auth.js', screenshot: screenshots[0] });
+    }
+
+    // Find Easy Apply button
+    const easyApplyBtn = page.locator('button:has-text("Easy Apply")').first();
+    const easyApply = await easyApplyBtn.isVisible({ timeout: 8000 }).catch(() => false);
+
+    if (!easyApply) {
+      // Check for external Apply button
+      const externalApply = await page.locator('button:has-text("Apply"), a:has-text("Apply")').first().isVisible({ timeout: 3000 }).catch(() => false);
+      await browser.close();
+      return out({
+        success: false,
+        error: externalApply ? 'External application required (no Easy Apply)' : 'No apply button found',
+        screenshot: screenshots[0],
+        skipped: true
+      });
+    }
+
+    if (dryRun) {
+      await screenshot('02_dryrun_easyapply_visible');
+      await browser.close();
+      return out({ success: true, dry_run: true, message: 'Easy Apply found, would have applied', screenshots });
     }
 
     await easyApplyBtn.click();
-    await page.waitForTimeout(2000);
-    await screenshot('02_apply_modal');
+    await page.waitForTimeout(2500);
+    await screenshot('02_modal_opened');
 
-    // Fill contact information fields if present
-    const fieldsToFill = [
-      { selector: 'input[name="phoneNumber"], input[id*="phone"]', value: APPLICANT.phone },
-      { selector: 'input[id*="firstName"], input[name="firstName"]', value: 'Debu' },
-      { selector: 'input[id*="lastName"], input[name="lastName"]', value: 'Rajput' },
-      { selector: 'input[type="email"]', value: APPLICANT.email }
-    ];
+    // Iterate through Easy Apply modal pages (max 6)
+    for (let pageNum = 1; pageNum <= 6; pageNum++) {
+      // Auto-fill phone if visible
+      const phoneInput = page.locator('input[id*="phoneNumber"], input[name*="phone"]').first();
+      if (await phoneInput.isVisible({ timeout: 1500 }).catch(() => false)) {
+        await phoneInput.fill(APPLICANT.phone).catch(() => {});
+      }
 
-    for (const field of fieldsToFill) {
-      try {
-        const el = page.locator(field.selector).first();
-        if (await el.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await el.clear();
-          await el.fill(field.value);
-        }
-      } catch (_) {}
-    }
-
-    // Upload CV if file upload exists
-    if (cvPath && fs.existsSync(cvPath)) {
-      try {
+      // Upload CV if file input is visible (Easy Apply CV upload step)
+      if (cvPath && fs.existsSync(cvPath)) {
         const fileInput = page.locator('input[type="file"]').first();
-        if (await fileInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await fileInput.setInputFiles(cvPath);
-          await page.waitForTimeout(1500);
+        if (await fileInput.isVisible({ timeout: 1500 }).catch(() => false)) {
+          await fileInput.setInputFiles(cvPath).catch(() => {});
+          await page.waitForTimeout(2000);
         }
-      } catch (_) {}
-    }
+      }
 
-    await screenshot('03_form_filled');
-
-    // Answer screening questions - iterate through modal pages
-    let pageNum = 0;
-    let maxPages = 10;
-
-    while (pageNum < maxPages) {
-      pageNum++;
-
-      // Answer common yes/no questions
-      const questionAnswers = [
-        { text: /years of experience/i, type: 'number', value: '3' },
-        { text: /authorized to work/i, type: 'radio_yes', value: 'Yes' },
-        { text: /require.*visa|require.*sponsorship/i, type: 'radio_no', value: 'No' },
-        { text: /willing to relocate/i, type: 'radio_yes', value: 'Yes' },
-        { text: /currently employ/i, type: 'radio_yes', value: 'Yes' }
+      // Common screening question answers
+      const screeningPatterns = [
+        { regex: /years?\s+of\s+experience/i, type: 'number', value: '3' },
+        { regex: /authorized\s+to\s+work|right\s+to\s+work/i, type: 'radio', answer: 'Yes' },
+        { regex: /require.*sponsorship|require.*visa/i, type: 'radio', answer: 'No' },
+        { regex: /willing\s+to\s+relocate/i, type: 'radio', answer: 'Yes' },
+        { regex: /currently\s+employ/i, type: 'radio', answer: 'Yes' },
+        { regex: /notice\s+period/i, type: 'number', value: '30' },
+        { regex: /current\s+(salary|ctc)/i, type: 'number', value: '600000' },
+        { regex: /expected\s+(salary|ctc)/i, type: 'number', value: '1200000' }
       ];
 
-      for (const qa of questionAnswers) {
-        try {
-          const labels = await page.locator('label').all();
-          for (const label of labels) {
-            const text = await label.textContent().catch(() => '');
-            if (qa.text.test(text)) {
-              if (qa.type === 'number') {
+      const labels = await page.locator('label').all();
+      for (const label of labels) {
+        const text = await label.textContent().catch(() => '');
+        if (!text) continue;
+        for (const pattern of screeningPatterns) {
+          if (pattern.regex.test(text)) {
+            try {
+              if (pattern.type === 'number') {
                 const input = page.locator('input[type="number"], input[type="text"]').near(label).first();
-                if (await input.isVisible({ timeout: 1000 }).catch(() => false)) {
-                  await input.clear();
-                  await input.fill(qa.value);
+                if (await input.isVisible({ timeout: 800 }).catch(() => false)) {
+                  await input.clear().catch(() => {});
+                  await input.fill(pattern.value).catch(() => {});
                 }
-              } else if (qa.type === 'radio_yes') {
-                const yesRadio = page.locator('input[type="radio"][value="Yes"], input[type="radio"][value="yes"]').near(label).first();
-                if (await yesRadio.isVisible({ timeout: 1000 }).catch(() => false)) await yesRadio.click();
-              } else if (qa.type === 'radio_no') {
-                const noRadio = page.locator('input[type="radio"][value="No"], input[type="radio"][value="no"]').near(label).first();
-                if (await noRadio.isVisible({ timeout: 1000 }).catch(() => false)) await noRadio.click();
+              } else if (pattern.type === 'radio') {
+                const radio = page.locator(`input[type="radio"][value="${pattern.answer}"]`).near(label).first();
+                if (await radio.isVisible({ timeout: 800 }).catch(() => false)) {
+                  await radio.click().catch(() => {});
+                }
               }
-            }
+            } catch (_) {}
+            break;
           }
-        } catch (_) {}
+        }
       }
 
-      // Look for Next or Submit button
-      const nextBtn = page.locator('button:has-text("Next"), button:has-text("Continue"), button:has-text("Review")').last();
-      const submitBtn = page.locator('button:has-text("Submit application"), button:has-text("Submit")').last();
+      await screenshot(`03_page_${pageNum}_filled`);
 
-      const submitVisible = await submitBtn.isVisible({ timeout: 2000 }).catch(() => false);
+      // Find Submit or Next button
+      const submitBtn = page.locator('button:has-text("Submit application")').last();
+      const reviewBtn = page.locator('button:has-text("Review")').last();
+      const nextBtn = page.locator('button[aria-label*="Continue"], button:has-text("Next"), button:has-text("Continue to next")').last();
+
+      const submitVisible = await submitBtn.isVisible({ timeout: 1500 }).catch(() => false);
       if (submitVisible) {
-        await screenshot(`0${pageNum + 3}_pre_submit`);
+        await screenshot(`04_pre_submit`);
         await submitBtn.click();
         await page.waitForTimeout(3000);
-        await screenshot(`0${pageNum + 3}_submitted`);
-        break;
+        await screenshot(`05_submitted`);
+
+        // Verify application sent (LinkedIn shows "Application sent" or closes modal)
+        const success = await page.locator('text=/Application sent|Your application was sent/i').first().isVisible({ timeout: 3000 }).catch(() => false);
+        await browser.close();
+        return out({ success: true, screenshot: screenshots[screenshots.length - 1], all_screenshots: screenshots, verified: success });
       }
 
-      const nextVisible = await nextBtn.isVisible({ timeout: 2000 }).catch(() => false);
+      const reviewVisible = await reviewBtn.isVisible({ timeout: 1500 }).catch(() => false);
+      if (reviewVisible) {
+        await reviewBtn.click();
+        await page.waitForTimeout(2000);
+        continue;
+      }
+
+      const nextVisible = await nextBtn.isVisible({ timeout: 1500 }).catch(() => false);
       if (nextVisible) {
         await nextBtn.click();
-        await page.waitForTimeout(1500);
-        await screenshot(`0${pageNum + 3}_page_${pageNum}`);
+        await page.waitForTimeout(2000);
       } else {
-        break;
+        // Modal might have additional questions we couldn't answer
+        await screenshot('06_stuck');
+        await browser.close();
+        return out({ success: false, error: 'Modal has unanswered questions or unknown layout', screenshot: screenshots[screenshots.length - 1] });
       }
     }
 
     await browser.close();
-    console.log(JSON.stringify({
-      success: true,
-      screenshot: screenshots[screenshots.length - 1] || null,
-      all_screenshots: screenshots,
-      error: null
-    }));
+    return out({ success: false, error: 'Modal exceeded 6 pages — likely complex application', screenshot: screenshots[screenshots.length - 1] });
 
   } catch (err) {
-    const ss = await screenshot('error').catch(() => null);
     await browser.close().catch(() => {});
-    console.log(JSON.stringify({
-      success: false,
-      screenshot: ss,
-      error: err.message
-    }));
+    return out({ success: false, error: err.message, screenshot: screenshots[screenshots.length - 1] });
   }
-}
-
-run();
+})();
