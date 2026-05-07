@@ -9,126 +9,164 @@
          background: #0d1117; color: #c9d1d9; padding: 24px; min-height: 100vh; }
   h1 { font-size: 28px; color: #58a6ff; margin-bottom: 4px; }
   .sub { color: #8b949e; margin-bottom: 24px; font-size: 14px; }
-  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #30363d; margin-bottom: 24px; }
+  .tab { padding: 12px 24px; cursor: pointer; color: #8b949e; border-bottom: 2px solid transparent; font-size: 15px; }
+  .tab:hover { color: #c9d1d9; }
+  .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .tab .badge { display: inline-block; background: #d29922; color: #0d1117; font-size: 11px;
+                padding: 2px 8px; border-radius: 10px; margin-left: 6px; font-weight: 600; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
   .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
   .card .label { font-size: 12px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
   .card .value { font-size: 32px; font-weight: 600; margin-top: 4px; }
   .applied { color: #3fb950; }
   .pending { color: #d29922; }
   .failed { color: #f85149; }
-  .skipped { color: #8b949e; }
   table { width: 100%; border-collapse: collapse; background: #161b22; border-radius: 8px; overflow: hidden; }
   th { background: #21262d; padding: 12px; text-align: left; font-size: 12px;
        text-transform: uppercase; color: #8b949e; }
   td { padding: 12px; border-bottom: 1px solid #21262d; font-size: 14px; }
   tr:hover { background: #1c2128; }
   .status { padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-  .status-APPLIED { background: #1f6f3f; color: #c8e6c9; }
-  .status-AWAITING_MANUAL_SUBMIT { background: #7d4f0a; color: #ffe082; }
+  .status-APPLIED, .status-SUBMITTED { background: #1f6f3f; color: #c8e6c9; }
+  .status-PENDING { background: #7d4f0a; color: #ffe082; }
+  .status-OPENED { background: #1c4ad9; color: #cfe1ff; }
   .status-FAILED { background: #6f1f1f; color: #f8c8c4; }
   .status-SKIPPED { background: #3d3d3d; color: #c9d1d9; }
-  .status-REJECTED { background: #3d3d3d; color: #8b949e; }
   a { color: #58a6ff; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .btn { padding: 6px 14px; border: 0; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+  .btn-primary { background: #238636; color: white; }
+  .btn-primary:hover { background: #2ea043; }
+  .btn-secondary { background: #30363d; color: #c9d1d9; margin-left: 6px; }
+  .btn-secondary:hover { background: #3d444c; }
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .filters { display: flex; gap: 12px; }
-  .filters input, .filters select {
-    background: #0d1117; border: 1px solid #30363d; color: #c9d1d9;
-    padding: 8px 12px; border-radius: 6px; font-size: 14px;
-  }
-  .refresh { background: #238636; color: white; border: 0; padding: 8px 16px;
-             border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .filters input, .filters select { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9;
+    padding: 8px 12px; border-radius: 6px; font-size: 14px; }
   .empty { text-align: center; padding: 48px; color: #8b949e; }
   .empty h3 { color: #c9d1d9; margin-bottom: 8px; }
   .ts { color: #8b949e; font-size: 12px; }
+  .alert { background: #7d4f0a; color: #ffe082; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
 </style>
 </head>
 <body>
 
 <h1>🤖 Job Agent — Local Dashboard</h1>
-<p class="sub">Reads from <code>setup/applied_jobs.json</code> on your laptop. No internet required.</p>
+<p class="sub">Live data from your laptop. Auto-refreshes every 30s.</p>
 
-<div class="stats" id="stats">
-  <div class="card"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
-  <div class="card"><div class="label">Applied</div><div class="value applied" id="stat-applied">—</div></div>
-  <div class="card"><div class="label">Awaiting Submit</div><div class="value pending" id="stat-pending">—</div></div>
-  <div class="card"><div class="label">Failed</div><div class="value failed" id="stat-failed">—</div></div>
-  <div class="card"><div class="label">Today</div><div class="value applied" id="stat-today">—</div></div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('applications')">📋 All Applications</div>
+  <div class="tab" onclick="switchTab('tier1')">⭐ Tier 1 Pending <span class="badge" id="tier1-badge" style="display:none">0</span></div>
 </div>
 
-<div class="toolbar">
-  <div class="filters">
-    <input type="text" id="search" placeholder="Search company or title..." oninput="render()" />
-    <select id="filterStatus" onchange="render()">
-      <option value="">All statuses</option>
-      <option value="APPLIED">Applied</option>
-      <option value="AWAITING_MANUAL_SUBMIT">Awaiting Submit</option>
-      <option value="FAILED">Failed</option>
-      <option value="SKIPPED">Skipped</option>
-    </select>
-    <select id="filterPlatform" onchange="render()">
-      <option value="">All platforms</option>
-    </select>
+<!-- ============== APPLICATIONS TAB ============== -->
+<div class="panel active" id="panel-applications">
+  <div class="stats">
+    <div class="card"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
+    <div class="card"><div class="label">Applied</div><div class="value applied" id="stat-applied">—</div></div>
+    <div class="card"><div class="label">Awaiting Submit</div><div class="value pending" id="stat-pending">—</div></div>
+    <div class="card"><div class="label">Failed</div><div class="value failed" id="stat-failed">—</div></div>
+    <div class="card"><div class="label">Today</div><div class="value applied" id="stat-today">—</div></div>
   </div>
-  <button class="refresh" onclick="loadData()">↻ Refresh</button>
+
+  <div class="toolbar">
+    <div class="filters">
+      <input type="text" id="search" placeholder="Search company or title..." oninput="renderApps()" />
+      <select id="filterStatus" onchange="renderApps()">
+        <option value="">All statuses</option>
+        <option value="APPLIED">Applied</option>
+        <option value="AWAITING_MANUAL_SUBMIT">Awaiting Submit</option>
+        <option value="FAILED">Failed</option>
+        <option value="SKIPPED">Skipped</option>
+      </select>
+      <select id="filterPlatform" onchange="renderApps()">
+        <option value="">All platforms</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="loadAll()">↻ Refresh</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>When</th><th>Company</th><th>Role</th><th>Platform</th><th>Score</th><th>Status</th><th>Link</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
 </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>When</th>
-      <th>Company</th>
-      <th>Role</th>
-      <th>Platform</th>
-      <th>Score</th>
-      <th>Status</th>
-      <th>Link</th>
-    </tr>
-  </thead>
-  <tbody id="rows"></tbody>
-</table>
+<!-- ============== TIER 1 PENDING TAB ============== -->
+<div class="panel" id="panel-tier1">
+  <div class="alert" id="tier1-alert" style="display:none;">
+    💡 The agent has filled tailored CV + cover letter for these jobs. Click <strong>"Open & Submit"</strong> to launch the application form. The browser will open with everything pre-filled — just review and click Submit yourself.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Queued</th><th>Company</th><th>Role</th><th>Score</th><th>Status</th><th>Generated Files</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="tier1-rows"></tbody>
+  </table>
+</div>
 
 <script>
-let allRows = [];
+let allApps = [];
+let tier1Items = [];
 
-async function loadData() {
-  // Load via fetch from filesystem (need to open this file as file://)
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+async function loadAll() {
+  await Promise.all([loadApps(), loadTier1()]);
+}
+
+async function loadApps() {
   try {
-    // Try fetch first (works if served via http)
     const res = await fetch('../setup/applied_jobs.json');
     if (res.ok) {
       const data = await res.json();
-      allRows = data.applications || [];
-    } else throw new Error('not found');
-  } catch (e) {
-    document.getElementById('rows').innerHTML = `<tr><td colspan="7" class="empty">
-      <h3>No applications yet</h3>
-      <p>The agent hasn't applied to any jobs yet, or this file needs to be served via HTTP.</p>
-      <p style="margin-top: 8px; font-size: 12px;">To view: open a terminal and run:</p>
-      <pre style="margin-top: 8px; background: #0d1117; padding: 12px; border-radius: 6px; display: inline-block;">cd "C:\\Users\\Dev\\Desktop\\Job Agents\\job-agent"
-python -m http.server 8000
-Then open: http://localhost:8000/dashboard/local.html</pre>
-    </td></tr>`;
-    return;
-  }
+      allApps = data.applications || [];
+    }
+  } catch (e) { allApps = []; }
   populatePlatformFilter();
-  render();
+  renderApps();
   updateStats();
 }
 
+async function loadTier1() {
+  try {
+    const res = await fetch('http://127.0.0.1:9999/tier1-pending');
+    if (res.ok) {
+      const data = await res.json();
+      tier1Items = data.pending || [];
+    }
+  } catch (e) { tier1Items = []; }
+  renderTier1();
+}
+
 function populatePlatformFilter() {
-  const platforms = [...new Set(allRows.map(r => r.platform).filter(Boolean))].sort();
+  const platforms = [...new Set(allApps.map(r => r.platform).filter(Boolean))].sort();
   const sel = document.getElementById('filterPlatform');
   while (sel.options.length > 1) sel.remove(1);
   platforms.forEach(p => sel.add(new Option(p, p)));
 }
 
-function render() {
+function renderApps() {
   const search = document.getElementById('search').value.toLowerCase();
   const fStatus = document.getElementById('filterStatus').value;
   const fPlatform = document.getElementById('filterPlatform').value;
 
-  const filtered = allRows.filter(r => {
+  const filtered = allApps.filter(r => {
     if (fStatus && r.status !== fStatus) return false;
     if (fPlatform && r.platform !== fPlatform) return false;
     if (search && !((r.company || '') + (r.job_title || '')).toLowerCase().includes(search)) return false;
@@ -137,14 +175,12 @@ function render() {
 
   const tbody = document.getElementById('rows');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty"><h3>No applications yet</h3><p>The agent will populate this once jobs are applied to.</p></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty"><h3>No applications yet</h3><p>The agent will populate this once jobs are applied to. Scrapers run every 4-6 hours.</p></td></tr>';
     return;
   }
 
   tbody.innerHTML = filtered.map(r => {
-    const ts = r.timestamp ? new Date(r.timestamp).toLocaleString('en-IN', {
-      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-    }) : '';
+    const ts = r.timestamp ? new Date(r.timestamp).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     return `<tr>
       <td class="ts">${ts}</td>
       <td><strong>${r.company || ''}</strong></td>
@@ -157,14 +193,83 @@ function render() {
   }).join('');
 }
 
-function updateStats() {
-  const total = allRows.length;
-  const applied = allRows.filter(r => r.status === 'APPLIED').length;
-  const pending = allRows.filter(r => r.status === 'AWAITING_MANUAL_SUBMIT').length;
-  const failed = allRows.filter(r => r.status === 'FAILED').length;
-  const today = new Date().toISOString().slice(0, 10);
-  const todayCount = allRows.filter(r => r.timestamp && r.timestamp.startsWith(today)).length;
+function renderTier1() {
+  const pending = tier1Items.filter(t => t.status === 'PENDING' || t.status === 'OPENED');
+  const badge = document.getElementById('tier1-badge');
+  if (pending.length > 0) {
+    badge.textContent = pending.length;
+    badge.style.display = 'inline-block';
+    document.getElementById('tier1-alert').style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
 
+  const tbody = document.getElementById('tier1-rows');
+  if (tier1Items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty"><h3>No Tier 1 jobs queued</h3><p>When the agent finds Capgemini/Accenture/JLL/CBRE/EY jobs scoring 70+, they will appear here.</p></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = tier1Items.slice().reverse().map(t => {
+    const ts = t.queuedAt ? new Date(t.queuedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    const cvName = t.tailoredCvPath ? t.tailoredCvPath.split(/[\\/]/).pop() : '';
+    const clName = t.coverLetterPath ? t.coverLetterPath.split(/[\\/]/).pop() : '';
+    let actionBtn = '';
+    if (t.status === 'PENDING') {
+      actionBtn = `
+        <button class="btn btn-primary" onclick="openTier1('${t.id}')">Open & Submit</button>
+        <button class="btn btn-secondary" onclick="skipTier1('${t.id}')">Skip</button>`;
+    } else if (t.status === 'OPENED') {
+      actionBtn = `
+        <button class="btn btn-primary" onclick="markDone('${t.id}')">Mark Submitted</button>
+        <button class="btn btn-secondary" onclick="skipTier1('${t.id}')">Skip</button>`;
+    } else {
+      actionBtn = `<span class="ts">${t.status === 'SUBMITTED' ? '✓ Done' : t.status}</span>`;
+    }
+    return `<tr>
+      <td class="ts">${ts}</td>
+      <td><strong>${t.company || ''}</strong></td>
+      <td>${t.job_title || ''}</td>
+      <td>${t.score || '—'}</td>
+      <td><span class="status status-${t.status || 'PENDING'}">${t.status || 'PENDING'}</span></td>
+      <td>
+        ${cvName ? `<div style="font-size:11px;color:#8b949e">CV: ${cvName.substring(0, 40)}...</div>` : ''}
+        ${clName ? `<div style="font-size:11px;color:#8b949e">CL: ${clName.substring(0, 40)}...</div>` : ''}
+      </td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function openTier1(id) {
+  if (!confirm('A browser will open with the form pre-filled. Review and click Submit yourself in that browser.')) return;
+  const res = await fetch('http://127.0.0.1:9999/tier1-submit/' + id, { method: 'POST' });
+  if (res.ok) {
+    alert('Browser is launching. Look for the new Chrome window. Click Submit when ready.');
+    setTimeout(loadTier1, 2000);
+  } else {
+    alert('Failed: ' + (await res.text()));
+  }
+}
+
+async function skipTier1(id) {
+  if (!confirm('Skip this Tier 1 application?')) return;
+  await fetch('http://127.0.0.1:9999/tier1-skip/' + id, { method: 'POST' });
+  loadTier1();
+}
+
+async function markDone(id) {
+  await fetch('http://127.0.0.1:9999/tier1-done/' + id, { method: 'POST' });
+  loadTier1();
+}
+
+function updateStats() {
+  const total = allApps.length;
+  const applied = allApps.filter(r => r.status === 'APPLIED').length;
+  const pending = allApps.filter(r => r.status === 'AWAITING_MANUAL_SUBMIT').length;
+  const failed = allApps.filter(r => r.status === 'FAILED').length;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount = allApps.filter(r => r.timestamp && r.timestamp.startsWith(today)).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-applied').textContent = applied;
   document.getElementById('stat-pending').textContent = pending;
@@ -172,8 +277,8 @@ function updateStats() {
   document.getElementById('stat-today').textContent = todayCount;
 }
 
-setInterval(loadData, 30000); // auto-refresh every 30s
-loadData();
+setInterval(loadAll, 30000);
+loadAll();
 </script>
 
 </body>

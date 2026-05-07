@@ -3,3 +3,4 @@
 [2026-05-07T16:43:36.847Z] EXIT 0: stdout=14b stderr=0b
 [2026-05-07T16:58:19.809Z] RUN: node playwright/linkedin_apply.js --url https://linkedin.com/jobs/view/test --cv test.md --company TestCo --title TestRole --dry-run
 [2026-05-07T16:58:20.820Z] EXIT 0: stdout=130b stderr=0b
+[2026-05-07T17:33:48.883Z] Helper service listening on http://127.0.0.1:9999
