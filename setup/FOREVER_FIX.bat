@@ -59,8 +59,8 @@ REM Step 3: Activate all Job Agent workflows via direct SQLite write
 echo [3/4] Activating all Job Agent workflows via SQLite...
 python "C:\Users\Dev\Desktop\Job Agents\job-agent\setup\activate_workflows.py"
 
-REM Step 4: Run the master script now (starts n8n with everything active)
-echo [4/4] Starting n8n via master script...
+REM Step 4: Run the master script now (starts n8n + helper service)
+echo [4/4] Starting n8n + helper service via master script...
 call "%MASTER%"
 
 timeout /t 10 /nobreak >nul

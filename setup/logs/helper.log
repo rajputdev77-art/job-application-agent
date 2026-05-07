@@ -1,0 +1,3 @@
+[2026-05-07T16:43:26.571Z] Helper service listening on http://127.0.0.1:9999
+[2026-05-07T16:43:36.811Z] RUN: echo helper works
+[2026-05-07T16:43:36.847Z] EXIT 0: stdout=14b stderr=0b
