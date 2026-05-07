@@ -1,15 +1,12 @@
 @echo off
 REM ============================================
 REM One-time login to LinkedIn + Naukri.
-REM Run this ONCE to enable autonomous applications.
-REM
-REM What happens:
-REM 1. Chromium opens to LinkedIn login - you log in - press Enter
-REM 2. Chromium opens to Naukri login - you log in - press Enter
-REM 3. Auth cookies are saved. Future applications run without prompts.
-REM
-REM Re-run this if applications start failing with "session expired".
+REM Self-healing: ensures Playwright Chromium is installed before launching.
 REM ============================================
+
+setlocal
+
+cd /d "C:\Users\Dev\Desktop\Job Agents\job-agent"
 
 echo.
 echo ============================================
@@ -22,19 +19,49 @@ echo.
 echo Two browser windows will open one after another.
 echo Just log in normally in each, then come back to this window.
 echo.
-pause
 
-cd /d "C:\Users\Dev\Desktop\Job Agents\job-agent"
+REM Self-heal: ensure Playwright Chromium is installed
+echo [pre-check] Verifying Playwright Chromium is installed...
+cd playwright
+call npx playwright install chromium
+cd ..
+
+if errorlevel 1 (
+    echo.
+    echo ERROR: Could not install Playwright browser.
+    echo Try manually: cd playwright ^&^& npx playwright install chromium
+    pause
+    exit /b 1
+)
+
+echo.
+pause
 
 echo.
 echo === Step 1/2: LinkedIn ===
 echo.
+echo A browser will open. Log in to LinkedIn, then come back here.
+echo.
 node playwright\save_linkedin_auth.js
+if errorlevel 1 (
+    echo.
+    echo LinkedIn auth save failed. Continuing to Naukri anyway...
+    echo You can re-run this script later.
+    echo.
+    pause
+)
 
 echo.
 echo === Step 2/2: Naukri.com ===
 echo.
+echo A browser will open. Log in to Naukri, then come back here.
+echo.
 node playwright\save_naukri_auth.js
+if errorlevel 1 (
+    echo.
+    echo Naukri auth save failed.
+    echo.
+)
 
 echo.
 echo ============================================
@@ -48,3 +75,4 @@ echo   playwright\naukri_auth.json
 echo.
 echo Re-run this script if applications start failing.
 pause
+endlocal
