@@ -1,7 +1,7 @@
-// Indeed Playwright scraper - fresh browser, real headers.
-// Indeed blocks plain HTTP but allows browser traffic.
-
-const { chromium } = require('playwright');
+// Indeed Playwright scraper with stealth plugin.
+const { chromium } = require('playwright-extra');
+const stealth = require('puppeteer-extra-plugin-stealth')();
+chromium.use(stealth);
 
 const SEARCHES = [
   { q: 'AI Operations Manager', l: 'Delhi, India', platform: 'indeed_india' },
@@ -15,11 +15,15 @@ const SEARCHES = [
 ];
 
 async function scrape() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--disable-blink-features=AutomationControlled', '--no-sandbox']
+  });
   const context = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
+    viewport: { width: 1366, height: 800 },
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     locale: 'en-IN',
+    timezoneId: 'Asia/Kolkata',
     extraHTTPHeaders: {
       'Accept-Language': 'en-US,en;q=0.9',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9'
@@ -34,12 +38,12 @@ async function scrape() {
       const page = await context.newPage();
       const url = `https://in.indeed.com/jobs?q=${encodeURIComponent(s.q)}&l=${encodeURIComponent(s.l)}&fromage=1&sort=date`;
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(5000);
 
-      // Bypass Cloudflare/anti-bot wait
-      const isBlocked = await page.locator('text=/checking your browser|cloudflare/i').first().isVisible({ timeout: 1500 }).catch(() => false);
-      if (isBlocked) {
-        await page.waitForTimeout(8000);
+      const title = await page.title().catch(() => '');
+      if (/access denied|forbidden|blocked/i.test(title)) {
+        await page.close();
+        continue;
       }
 
       const jobs = await page.evaluate(() => {
@@ -76,6 +80,4 @@ async function scrape() {
   console.log(JSON.stringify({ jobs: allJobs, count: allJobs.length }));
 }
 
-scrape().catch(e => {
-  console.log(JSON.stringify({ error: e.message, jobs: [] }));
-});
+scrape().catch(e => console.log(JSON.stringify({ error: e.message, jobs: [] })));
