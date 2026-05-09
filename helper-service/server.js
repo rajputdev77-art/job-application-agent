@@ -186,6 +186,19 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, result);
   }
 
+  // === Scraper endpoints (run Playwright scrapers, return parsed JSON) ===
+  if (req.method === 'POST' && route.startsWith('/scrape/')) {
+    const platform = route.split('/').pop();
+    const allowed = ['naukri', 'indeed', 'wttj', 'tier1'];
+    if (!allowed.includes(platform)) return sendJson(res, 400, { error: 'Unknown platform' });
+    const cmd = `node playwright/scrape_${platform}.js`;
+    const result = await runCommand(cmd, { timeout: 600000 });
+    if (result.parsedOutput && result.parsedOutput.jobs) {
+      return sendJson(res, 200, result.parsedOutput);
+    }
+    return sendJson(res, 200, { jobs: [], error: result.stderr || 'No output' });
+  }
+
   return sendJson(res, 404, { error: 'Not found', method: req.method, path: route });
 });
 

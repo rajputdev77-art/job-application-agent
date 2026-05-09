@@ -8,7 +8,7 @@ There is a deprecation related to your environment variables. Please take the re
  - N8N_RUNNERS_ENABLED -> Remove this environment variable; it is no longer needed.
 
 [license SDK] Skipping renewal on init: license cert is not due for renewal
-Registered runner "JS Task Runner" (tkY15QOflNwatMMuJy-ga) 
+Registered runner "JS Task Runner" (PQaCQx82Sx4hQVRZczP2_) 
 Version: 2.14.2
 Building workflow dependency index...
 Start Active Workflows:
@@ -20,10 +20,14 @@ Activated workflow "Fit Scorer — Ollama (Qwen)" (ID: fit-scorer-workflow)
 Activated workflow "CV Builder — Ollama (Qwen)" (ID: cv-builder-workflow)
 Activated workflow "App Logger — Google Sheets" (ID: app-logger-workflow)
 Activated workflow "Executor — India Agent" (ID: india-agent-workflow)
-Finished building workflow dependency index. Processed 16 draft workflows, 0 published workflows.
 Activated workflow "Executor — Abroad Agent (EU)" (ID: abroad-agent-workflow)
+Finished building workflow dependency index. Processed 15 draft workflows, 4 published workflows.
 Activated workflow "Executor — Tier 1 Agent (Manual Review)" (ID: tier1-agent-workflow)
 Activated workflow "Scraper — LinkedIn Jobs" (ID: linkedin-scraper-workflow)
+Activated workflow "Scraper - Naukri (Playwright)" (ID: naukri-scraper-workflow)
+Activated workflow "Scraper - Indeed (Playwright)" (ID: indeed-scraper-workflow)
+Activated workflow "Scraper - WTTJ (Playwright)" (ID: wttj-scraper-workflow)
+Activated workflow "Scraper - Tier 1 (Playwright)" (ID: tier1-scraper-workflow)
 
 Editor is now accessible via:
 http://localhost:5678
