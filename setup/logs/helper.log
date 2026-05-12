@@ -16,3 +16,15 @@
 [2026-05-09T16:00:36.047Z] RUN: node playwright/scrape_naukri.js
 [2026-05-09T16:00:52.068Z] RUN: node playwright/scrape_tier1.js
 [2026-05-12T14:21:16.361Z] Helper service listening on http://127.0.0.1:9999
+[2026-05-12T14:21:59.146Z] RUN: node playwright/scrape_naukri.js
+[2026-05-12T14:24:06.500Z] RUN: node playwright/scrape_naukri.js
+[2026-05-12T14:25:34.356Z] RUN: node playwright/scrape_naukri.js
+[2026-05-12T14:25:37.633Z] RUN: node playwright/scrape_naukri.js
+[2026-05-12T14:26:08.385Z] RUN: node playwright/scrape_naukri.js
+[2026-05-12T14:26:11.619Z] RUN: node playwright/scrape_naukri.js
+[2026-05-12T14:27:16.072Z] RUN: node playwright/scrape_indeed.js
+[2026-05-12T14:27:18.140Z] RUN: node playwright/scrape_indeed.js
+[2026-05-12T14:28:07.146Z] RUN: node playwright/scrape_indeed.js
+[2026-05-12T14:28:41.545Z] RUN: node playwright/scrape_tier1.js
+[2026-05-12T14:28:42.032Z] RUN: node playwright/scrape_tier1.js
+[2026-05-12T14:29:30.311Z] RUN: node playwright/scrape_tier1.js
