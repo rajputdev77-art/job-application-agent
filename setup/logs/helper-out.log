@@ -1,2 +1,0 @@
-[2026-05-09T05:21:24.185Z] Helper service listening on http://127.0.0.1:9999
-[2026-05-09T05:21:55.194Z] RUN: node playwright/scrape_naukri.js

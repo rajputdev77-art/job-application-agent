@@ -7,3 +7,12 @@
 [2026-05-08T07:22:48.878Z] Helper service listening on http://127.0.0.1:9999
 [2026-05-09T05:21:24.185Z] Helper service listening on http://127.0.0.1:9999
 [2026-05-09T05:21:55.194Z] RUN: node playwright/scrape_naukri.js
+[2026-05-09T08:00:18.138Z] RUN: node playwright/scrape_indeed.js
+[2026-05-09T08:00:36.156Z] RUN: node playwright/scrape_naukri.js
+[2026-05-09T10:00:52.361Z] RUN: node playwright/scrape_tier1.js
+[2026-05-09T12:00:18.057Z] RUN: node playwright/scrape_indeed.js
+[2026-05-09T12:00:36.052Z] RUN: node playwright/scrape_naukri.js
+[2026-05-09T16:00:18.055Z] RUN: node playwright/scrape_indeed.js
+[2026-05-09T16:00:36.047Z] RUN: node playwright/scrape_naukri.js
+[2026-05-09T16:00:52.068Z] RUN: node playwright/scrape_tier1.js
+[2026-05-12T14:21:16.361Z] Helper service listening on http://127.0.0.1:9999
