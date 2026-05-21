@@ -90,6 +90,19 @@
       "status": "REJECTED",
       "job_url": "https://www.naukri.com/job-listings-ethics-independence-and-conflict-associate-crowe-noida-hyderabad-0-to-4-years-110526034875",
       "notes": "No match with Dev's target roles and skills"
+    },
+    {
+      "timestamp": "2026-05-21T11:22:22.957Z",
+      "company": "EY",
+      "job_title": "Senior Project Manager - Business Consulting",
+      "platform": "tier1_ey",
+      "location": "India",
+      "fit_score": 88,
+      "cv_variant": "A",
+      "cover_letter": "Yes",
+      "status": "AWAITING_MANUAL_SUBMIT",
+      "job_url": "https://careers.ey.com/ey/job/New-Delhi-Senior-Project-Manager-Business-Consulting-PI-TMT-CNS-BC-FINANCE/1290659902/",
+      "notes": "Form filled and ready for review. Screenshot: N/A"
     }
   ]
 }
