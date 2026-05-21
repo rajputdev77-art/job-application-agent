@@ -41,3 +41,4 @@
 [2026-05-14T12:35:28.646Z] RUN: node playwright/scrape_indeed.js
 [2026-05-14T12:36:53.360Z] RUN: node playwright/scrape_tier1.js
 [2026-05-21T10:42:20.093Z] Helper service listening on http://127.0.0.1:9999
+[2026-05-21T10:53:08.348Z] RUN: node playwright/linkedin_apply.js --url https://www.linkedin.com/jobs/view/4196891234 --cv "C:/Users/Dev/Desktop/Job Agents/job-agent/cv/cv_variant_b.md" --company Amazon --title "Operations Manager"
