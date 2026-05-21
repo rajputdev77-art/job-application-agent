@@ -51,6 +51,45 @@
       "status": "REJECTED",
       "job_url": "https://www.naukri.com/job-listings-project-manager-relu-consultancy-ghaziabad-2-to-4-years-230426035006",
       "notes": "Salary not mentioned, role does not match priority"
+    },
+    {
+      "timestamp": "2026-05-12T16:02:13.994Z",
+      "company": "class=\"base-search-card__subtitle\">\n              \n          <",
+      "job_title": "class=\"base-search-card__title\">\n            \n        Manager - Operations\n      \n          <",
+      "platform": "linkedin_india",
+      "location": "class=\"job-search-card__location\">\n            Mumbai, Maharashtra, India\n          <",
+      "fit_score": 85,
+      "cv_variant": "A",
+      "cover_letter": "Yes",
+      "status": "SCORED_PENDING_APPLY",
+      "job_url": "https://www.linkedin.com/jobs/view/4413566298",
+      "notes": "Manager - Operations, AI Operations Manager / AI Operations Specialist"
+    },
+    {
+      "timestamp": "2026-05-12T16:02:26.180Z",
+      "company": "ASSPL - Karnataka",
+      "job_title": "Operations Manager, Amazon",
+      "platform": "indeed_india",
+      "location": "Delhi, Delhi",
+      "fit_score": 85,
+      "cv_variant": "A",
+      "cover_letter": "Yes",
+      "status": "SCORED_PENDING_APPLY",
+      "job_url": "https://in.indeed.com/viewjob?jk=74324f0828e99f9a",
+      "notes": "AI Operations Manager / AI Operations Specialist / AI Ops Lead"
+    },
+    {
+      "timestamp": "2026-05-12T16:02:40.421Z",
+      "company": "Crowe",
+      "job_title": "Ethics, Independence, and Conflict Associate",
+      "platform": "naukri",
+      "location": "Noida, Hyderabad",
+      "fit_score": "",
+      "cv_variant": "",
+      "cover_letter": "No",
+      "status": "REJECTED",
+      "job_url": "https://www.naukri.com/job-listings-ethics-independence-and-conflict-associate-crowe-noida-hyderabad-0-to-4-years-110526034875",
+      "notes": "No match with Dev's target roles and skills"
     }
   ]
 }
