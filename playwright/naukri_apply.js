@@ -12,9 +12,10 @@ const APPLICANT = {
   notice_period: '30'
 };
 
-const jobUrl = args.url;
-const cvPath = args.cv;
-const company = args.company || 'unknown';
+const clean = s => (s || '').toString().replace(/^["']+|["']+$/g, '').trim();
+const jobUrl = clean(args.url);
+const cvPath = clean(args.cv);
+const company = clean(args.company) || 'unknown';
 const dryRun = args['dry-run'] === true || args['dry-run'] === 'true';
 const outputDir = path.join(__dirname, '..', 'output');
 const authPath = path.join(__dirname, 'naukri_auth.json');

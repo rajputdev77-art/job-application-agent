@@ -31,11 +31,12 @@ const APPLICANT = {
   notice_period: '30 days'
 };
 
-const jobUrl = args.url;
-const cvPath = args.cv;
-const coverLetterPath = args.coverletter;
-const company = args.company || 'Tier1Company';
-const jobTitle = args.title || 'Role';
+const clean = s => (s || '').toString().replace(/^["']+|["']+$/g, '').trim();
+const jobUrl = clean(args.url);
+const cvPath = clean(args.cv);
+const coverLetterPath = clean(args.coverletter);
+const company = clean(args.company) || 'Tier1Company';
+const jobTitle = clean(args.title) || 'Role';
 const outputDir = path.join(__dirname, '..', 'output');
 
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });

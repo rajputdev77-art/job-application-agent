@@ -15,10 +15,13 @@ const APPLICANT = {
   years_experience: '3'
 };
 
-const jobUrl = args.url;
-const cvPath = args.cv;
-const company = args.company || 'unknown';
-const jobTitle = args.title || 'unknown';
+// Strip stray quotes added by shell escaping (cmd.exe quirks)
+const clean = s => (s || '').toString().replace(/^["']+|["']+$/g, '').trim();
+const jobUrl = clean(args.url);
+const cvPath = clean(args.cv);
+const company = clean(args.company) || 'unknown';
+const jobTitle = clean(args.title) || 'unknown';
+const coverLetterPath = clean(args.coverletter);
 const dryRun = args['dry-run'] === true || args['dry-run'] === 'true';
 const isEu = args.eu === true || args.eu === 'true';
 
