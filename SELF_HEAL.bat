@@ -74,21 +74,31 @@ powershell -NoProfile -Command "Start-Process -FilePath 'node.exe' -ArgumentList
 timeout /t 3 /nobreak >nul
 
 REM === STEP 7: Start n8n with proper env vars ===
-echo [7/8] Starting n8n with sandbox bypass (port 5678)...
+echo [7/9] Starting n8n with sandbox bypass (port 5678)...
 powershell -NoProfile -Command "$env:NODE_FUNCTION_ALLOW_BUILTIN='*'; $env:NODE_FUNCTION_ALLOW_EXTERNAL='*'; $env:N8N_RUNNERS_ENABLED='false'; Start-Process -FilePath 'cmd.exe' -ArgumentList '/c','n8n start' -WindowStyle Hidden -RedirectStandardOutput '%LOGDIR%\n8n-out.log' -RedirectStandardError '%LOGDIR%\n8n-err.log'" >nul 2>&1
 
-REM === STEP 8: Wait for both ports ===
-echo [8/8] Waiting for services to come up...
+REM === STEP 8: Start dashboard HTTP server ===
+echo [8/9] Starting dashboard server (port 8765)...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8765" ^| findstr "LISTENING" 2^>nul') do (
+    powershell -NoProfile -Command "Stop-Process -Id %%a -Force -ErrorAction SilentlyContinue" >nul 2>&1
+)
+timeout /t 2 /nobreak >nul
+powershell -NoProfile -Command "Start-Process -FilePath 'python.exe' -ArgumentList '-m','http.server','8765' -WorkingDirectory '%BASE%' -WindowStyle Hidden -RedirectStandardOutput '%LOGDIR%\dashboard.log' -RedirectStandardError '%LOGDIR%\dashboard-err.log'" >nul 2>&1
+
+REM === STEP 9: Wait for all ports ===
+echo [9/9] Waiting for services to come up...
 set /a counter=0
 :waitloop
 timeout /t 2 /nobreak >nul
 set "n8n_up=0"
 set "helper_up=0"
+set "dash_up=0"
 netstat -an | findstr ":5678" | findstr "LISTENING" >nul 2>&1 && set "n8n_up=1"
 netstat -an | findstr ":9999" | findstr "LISTENING" >nul 2>&1 && set "helper_up=1"
-if !n8n_up!==1 if !helper_up!==1 goto :ready
+netstat -an | findstr ":8765" | findstr "LISTENING" >nul 2>&1 && set "dash_up=1"
+if !n8n_up!==1 if !helper_up!==1 if !dash_up!==1 goto :ready
 set /a counter+=1
-if !counter! geq 20 goto :failed
+if !counter! geq 25 goto :failed
 goto :waitloop
 
 :ready
@@ -98,12 +108,15 @@ echo   DONE - All systems live
 echo ============================================
 echo.
 echo Status:
-echo   n8n     : http://localhost:5678  RUNNING
-echo   Helper  : http://127.0.0.1:9999  RUNNING
-echo   Ollama  : http://127.0.0.1:11434 RUNNING
+echo   n8n        : http://localhost:5678   RUNNING
+echo   Helper     : http://127.0.0.1:9999   RUNNING
+echo   Ollama     : http://127.0.0.1:11434  RUNNING
+echo   Dashboard  : http://127.0.0.1:8765/dashboard/local.html  RUNNING
+echo.
+echo Opening dashboard in your browser...
+start "" "http://127.0.0.1:8765/dashboard/local.html"
 echo.
 echo The agent will scrape on its schedule (every 4-6 hours).
-echo To see results: double-click dashboard\OPEN_DASHBOARD.bat
 echo.
 echo [%date% %time%] === SELF HEAL SUCCESS === >> "%HEAL_LOG%"
 timeout /t 3 /nobreak >nul

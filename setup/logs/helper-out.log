@@ -1,7 +1,0 @@
-[2026-05-21T10:42:20.093Z] Helper service listening on http://127.0.0.1:9999
-[2026-05-21T10:53:08.348Z] RUN: node playwright/linkedin_apply.js --url https://www.linkedin.com/jobs/view/4196891234 --cv "C:/Users/Dev/Desktop/Job Agents/job-agent/cv/cv_variant_b.md" --company Amazon --title "Operations Manager"
-[2026-05-21T11:09:47.827Z] RUN: node playwright/linkedin_apply.js --url "https://www.linkedin.com/jobs/view/4413566298" --cv "C:/Users/Dev/Desktop/Job Agents/job-agent/output/tailored_cv_ASSPL_-_Karnataka_Operations_Manager__Amazon_2026-05-21T11-08-01-703Z.md" --coverletter "C:/Users/Dev/Desktop/Job Agents/job-agent/output/cover_letter_ASSPL_-_Karnataka_Operations_Manager__Amazon_2026-05-21T11-08-48-777Z.txt" --company "ASSPL - Karnataka" --title "Operations Manager, Amazon"
-[2026-05-21T11:10:28.972Z] RUN: node playwright/linkedin_apply.js --url "https://www.linkedin.com/jobs/view/4413566298" --cv "C:/Users/Dev/Desktop/Job Agents/job-agent/output/tailored_cv_ASSPL_-_Karnataka_Operations_Manager__Amazon_2026-05-21T11-08-01-703Z.md" --coverletter "C:/Users/Dev/Desktop/Job Agents/job-agent/output/cover_letter_ASSPL_-_Karnataka_Operations_Manager__Amazon_2026-05-21T11-08-48-777Z.txt" --company "ASSPL - Karnataka" --title "Operations Manager, Amazon"
-[2026-05-21T11:16:31.583Z] RUN: node playwright/scrape_tier1.js
-[2026-05-21T11:22:22.823Z] Tier 1 queued: undefined - undefined
-[2026-05-21T11:32:46.538Z] Tier 1 queued: EY - Senior Project Manager - Business Consulting

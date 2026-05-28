@@ -47,3 +47,8 @@
 [2026-05-21T11:16:31.583Z] RUN: node playwright/scrape_tier1.js
 [2026-05-21T11:22:22.823Z] Tier 1 queued: undefined - undefined
 [2026-05-21T11:32:46.538Z] Tier 1 queued: EY - Senior Project Manager - Business Consulting
+[2026-05-21T11:39:27.314Z] Opening Tier 1 form for: EY
+[2026-05-21T11:39:27.320Z] RUN: node playwright/tier1_form_fill.js --url "https://careers.ey.com/ey/job/test" --cv "C:/Users/Dev/Desktop/Job Agents/job-agent/cv/cv_variant_a.md" --coverletter "" --company "EY" --title "Senior Project Manager - Business Consulting"
+[2026-05-21T12:00:53.030Z] RUN: node playwright/scrape_naukri.js
+[2026-05-21T12:00:53.044Z] RUN: node playwright/scrape_indeed.js
+[2026-05-28T10:55:26.305Z] Helper service listening on http://127.0.0.1:9999

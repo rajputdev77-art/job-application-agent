@@ -103,6 +103,45 @@
       "status": "AWAITING_MANUAL_SUBMIT",
       "job_url": "https://careers.ey.com/ey/job/New-Delhi-Senior-Project-Manager-Business-Consulting-PI-TMT-CNS-BC-FINANCE/1290659902/",
       "notes": "Form filled and ready for review. Screenshot: N/A"
+    },
+    {
+      "timestamp": "2026-05-21T12:03:51.897Z",
+      "company": "class=\"base-search-card__subtitle\">\n              \n          <",
+      "job_title": "class=\"base-search-card__title\">\n            \n        Manager Operations\n      \n          <",
+      "platform": "linkedin_india",
+      "location": "class=\"job-search-card__location\">\n            Gurugram, Haryana, India\n          <",
+      "fit_score": 73,
+      "cv_variant": "A",
+      "cover_letter": "Yes",
+      "status": "SCORED_PENDING_APPLY",
+      "job_url": "https://www.linkedin.com/jobs/view/4416505356",
+      "notes": "Manager Operations"
+    },
+    {
+      "timestamp": "2026-05-21T12:04:16.762Z",
+      "company": "Nisha Rajput Coaching",
+      "job_title": "HR Manager (Location: Sagarpur, 2 years exp. required)",
+      "platform": "indeed_india",
+      "location": "Sagarpur, Delhi, Delhi",
+      "fit_score": "",
+      "cv_variant": "",
+      "cover_letter": "No",
+      "status": "REJECTED",
+      "job_url": "https://in.indeed.com/viewjob?jk=7443eb3178ee146f",
+      "notes": "No match with Dev's skills and experience"
+    },
+    {
+      "timestamp": "2026-05-21T12:04:43.129Z",
+      "company": "Nxtwave Disruptive Technologies",
+      "job_title": "Walk-In Interview - Program Manager & Program Management Associate",
+      "platform": "naukri",
+      "location": "Delhi / NCR, Noida, Mathura",
+      "fit_score": 10,
+      "cv_variant": "",
+      "cover_letter": "No",
+      "status": "REJECTED",
+      "job_url": "https://www.naukri.com/job-listings-walk-in-interview-program-manager-program-management-associate-nxtwave-disruptive-technologies-noida-mathura-delhi-ncr-0-to-7-years-200526040803",
+      "notes": "No AI relevance, Salary not mentioned"
     }
   ]
 }
