@@ -70,7 +70,7 @@ python "%BASE%\setup\activate_workflows.py" >> "%HEAL_LOG%" 2>&1
 
 REM === STEP 6: Start helper service ===
 echo [6/8] Starting helper service (port 9999)...
-powershell -NoProfile -Command "Start-Process -FilePath 'node.exe' -ArgumentList '\"%BASE%\helper-service\server.js\"' -WindowStyle Hidden -RedirectStandardOutput '%LOGDIR%\helper-out.log' -RedirectStandardError '%LOGDIR%\helper-err.log'" >nul 2>&1
+powershell -NoProfile -Command "Start-Process -FilePath 'node.exe' -ArgumentList '\"%BASE%\helper-service\server.cjs\"' -WindowStyle Hidden -RedirectStandardOutput '%LOGDIR%\helper-out.log' -RedirectStandardError '%LOGDIR%\helper-err.log'" >nul 2>&1
 timeout /t 3 /nobreak >nul
 
 REM === STEP 7: Start n8n with proper env vars ===
@@ -83,7 +83,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8765" ^| findstr "LISTENING
     powershell -NoProfile -Command "Stop-Process -Id %%a -Force -ErrorAction SilentlyContinue" >nul 2>&1
 )
 timeout /t 2 /nobreak >nul
-powershell -NoProfile -Command "Start-Process -FilePath 'python.exe' -ArgumentList '-m','http.server','8765' -WorkingDirectory '%BASE%' -WindowStyle Hidden -RedirectStandardOutput '%LOGDIR%\dashboard.log' -RedirectStandardError '%LOGDIR%\dashboard-err.log'" >nul 2>&1
+powershell -NoProfile -Command "Start-Process -FilePath 'node.exe' -ArgumentList '\"%BASE%\dashboard\server.cjs\"' -WindowStyle Hidden -RedirectStandardOutput '%LOGDIR%\dashboard.log' -RedirectStandardError '%LOGDIR%\dashboard-err.log'" >nul 2>&1
 
 REM === STEP 9: Wait for all ports ===
 echo [9/9] Waiting for services to come up...

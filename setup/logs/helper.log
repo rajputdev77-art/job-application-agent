@@ -52,3 +52,17 @@
 [2026-05-21T12:00:53.030Z] RUN: node playwright/scrape_naukri.js
 [2026-05-21T12:00:53.044Z] RUN: node playwright/scrape_indeed.js
 [2026-05-28T10:55:26.305Z] Helper service listening on http://127.0.0.1:9999
+[2026-05-28T11:01:52.510Z] RUN: node playwright/scrape_naukri.js
+[2026-05-28T11:05:27.365Z] RUN: node playwright/scrape_naukri.js
+[2026-05-28T12:00:21.139Z] RUN: node playwright/scrape_naukri.js
+[2026-05-28T12:00:41.057Z] RUN: node playwright/scrape_indeed.js
+[2026-05-28T16:00:04.957Z] RUN: node playwright/scrape_tier1.js
+[2026-05-28T16:00:21.818Z] RUN: node playwright/scrape_naukri.js
+[2026-05-28T16:00:41.846Z] RUN: node playwright/scrape_indeed.js
+[2026-06-07T13:49:40.215Z] Helper service listening on http://127.0.0.1:9999
+[2026-06-07T13:49:42.471Z] UNCAUGHT: listen EADDRINUSE: address already in use 127.0.0.1:9999
+Error: listen EADDRINUSE: address already in use 127.0.0.1:9999
+    at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+    at listenInCluster (node:net:2005:12)
+    at node:net:2214:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)

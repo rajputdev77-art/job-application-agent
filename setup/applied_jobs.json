@@ -53,19 +53,6 @@
       "notes": "Salary not mentioned, role does not match priority"
     },
     {
-      "timestamp": "2026-05-12T16:02:13.994Z",
-      "company": "class=\"base-search-card__subtitle\">\n              \n          <",
-      "job_title": "class=\"base-search-card__title\">\n            \n        Manager - Operations\n      \n          <",
-      "platform": "linkedin_india",
-      "location": "class=\"job-search-card__location\">\n            Mumbai, Maharashtra, India\n          <",
-      "fit_score": 85,
-      "cv_variant": "A",
-      "cover_letter": "Yes",
-      "status": "SCORED_PENDING_APPLY",
-      "job_url": "https://www.linkedin.com/jobs/view/4413566298",
-      "notes": "Manager - Operations, AI Operations Manager / AI Operations Specialist"
-    },
-    {
       "timestamp": "2026-05-12T16:02:26.180Z",
       "company": "ASSPL - Karnataka",
       "job_title": "Operations Manager, Amazon",
@@ -105,19 +92,6 @@
       "notes": "Form filled and ready for review. Screenshot: N/A"
     },
     {
-      "timestamp": "2026-05-21T12:03:51.897Z",
-      "company": "class=\"base-search-card__subtitle\">\n              \n          <",
-      "job_title": "class=\"base-search-card__title\">\n            \n        Manager Operations\n      \n          <",
-      "platform": "linkedin_india",
-      "location": "class=\"job-search-card__location\">\n            Gurugram, Haryana, India\n          <",
-      "fit_score": 73,
-      "cv_variant": "A",
-      "cover_letter": "Yes",
-      "status": "SCORED_PENDING_APPLY",
-      "job_url": "https://www.linkedin.com/jobs/view/4416505356",
-      "notes": "Manager Operations"
-    },
-    {
       "timestamp": "2026-05-21T12:04:16.762Z",
       "company": "Nisha Rajput Coaching",
       "job_title": "HR Manager (Location: Sagarpur, 2 years exp. required)",
@@ -142,6 +116,71 @@
       "status": "REJECTED",
       "job_url": "https://www.naukri.com/job-listings-walk-in-interview-program-manager-program-management-associate-nxtwave-disruptive-technologies-noida-mathura-delhi-ncr-0-to-7-years-200526040803",
       "notes": "No AI relevance, Salary not mentioned"
+    },
+    {
+      "timestamp": "2026-05-28T11:10:37.906Z",
+      "company": "Test Co",
+      "job_title": "AI Operations Manager",
+      "platform": "naukri",
+      "location": "Delhi",
+      "fit_score": 85,
+      "cv_variant": "B",
+      "cover_letter": "No",
+      "status": "SCORED_PENDING_APPLY",
+      "job_url": "http://test/123",
+      "notes": "AI Operations Manager, AI Operations Specialist, AI Ops Lead"
+    },
+    {
+      "timestamp": "2026-05-28T12:03:12.380Z",
+      "company": "Nxtwave Disruptive Technologies",
+      "job_title": "Program Management Associate",
+      "platform": "naukri",
+      "location": "Delhi / NCR, Mumbai (All Areas), Hyderabad",
+      "fit_score": "",
+      "cv_variant": "",
+      "cover_letter": "No",
+      "status": "REJECTED",
+      "job_url": "https://www.naukri.com/job-listings-program-management-associate-nxtwave-disruptive-technologies-hyderabad-delhi-ncr-mumbai-all-areas-0-to-2-years-220526033889",
+      "notes": "No AI relevance"
+    },
+    {
+      "timestamp": "2026-05-28T12:03:27.324Z",
+      "company": "SK. Weldedmesh Pvt.Ltd.",
+      "job_title": "Business Development Manager (BDM) \u2013 North India",
+      "platform": "indeed_india",
+      "location": "Delhi",
+      "fit_score": "",
+      "cv_variant": "",
+      "cover_letter": "No",
+      "status": "REJECTED",
+      "job_url": "https://in.indeed.com/viewjob?jk=5f36358447911051",
+      "notes": "Role does not match AI industry priority and salary is not mentioned"
+    },
+    {
+      "timestamp": "2026-05-28T16:01:55.281Z",
+      "company": "EY",
+      "job_title": "Senior Project Consultant - Business Consulting PI - TMT - CNS - BC - FINANCE - New Delhi",
+      "platform": "tier1_ey",
+      "location": "India",
+      "fit_score": "",
+      "cv_variant": "",
+      "cover_letter": "No",
+      "status": "REJECTED",
+      "job_url": "https://careers.ey.com/ey/job/New-Delhi-Senior-Project-Consultant-Business-Consulting-PI-TMT-CNS-BC-FINANCE-New-Delhi-Nati-110037/1290666801/",
+      "notes": "Non-technical role in finance/banking/insurance"
+    },
+    {
+      "timestamp": "2026-05-28T16:02:09.473Z",
+      "company": "Unidus D\u00e9cor Pvt Ltd.",
+      "job_title": "Assistant Manager - HR Operations",
+      "platform": "indeed_india",
+      "location": "Kirti Nagar, Delhi, Delhi",
+      "fit_score": 15,
+      "cv_variant": "",
+      "cover_letter": "No",
+      "status": "REJECTED",
+      "job_url": "https://in.indeed.com/viewjob?jk=8d553ecc66239068",
+      "notes": "Below 10 LPA, non-AI role"
     }
   ]
 }
