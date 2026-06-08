@@ -3,6 +3,7 @@ const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
 chromium.use(stealth);
 
+const { shouldKeepJob } = require('./job_filter.cjs');
 const path = require('path');
 const fs = require('fs');
 
@@ -40,7 +41,7 @@ async function scrape() {
   for (const kw of KEYWORDS) {
     try {
       const page = await context.newPage();
-      const url = `https://www.naukri.com/${kw.toLowerCase().replace(/\s+/g, '-')}-jobs-in-${LOCATION}?experience=2-5`;
+      const url = `https://www.naukri.com/${kw.toLowerCase().replace(/\s+/g, '-')}-jobs-in-${LOCATION}?experience=2-5&ctcFilter=10to15`;
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(4500);
 
@@ -72,6 +73,8 @@ async function scrape() {
         const id = j.job_url.match(/\/(\d+)/)?.[1] || j.job_url;
         if (seen.has(id)) continue;
         seen.add(id);
+        if (!shouldKeepJob(j)) continue;
+        if (!shouldKeepJob(j)) continue;
         allJobs.push({ ...j, source_platform: 'naukri', search_term: kw });
       }
       await page.close();

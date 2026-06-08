@@ -3,6 +3,7 @@ const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
 chromium.use(stealth);
 
+const { shouldKeepJob } = require('./job_filter.cjs');
 const SEARCHES = [
   { query: 'AI Operations', city: 'Paris' },
   { query: 'AI Project Manager', city: 'London' },
@@ -66,6 +67,7 @@ async function scrape() {
       for (const j of jobs) {
         if (seen.has(j.job_url)) continue;
         seen.add(j.job_url);
+        if (!shouldKeepJob(j)) continue;
         allJobs.push({
           ...j, source_platform: 'wttj', search_term: s.query,
           description: `${j.job_title} at ${j.company}, ${j.location}. See: ${j.job_url}`

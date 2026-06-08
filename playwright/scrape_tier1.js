@@ -3,6 +3,7 @@ const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
 chromium.use(stealth);
 
+const { shouldKeepJob } = require('./job_filter.cjs');
 const TARGETS = [
   {
     company: 'Capgemini',
@@ -63,6 +64,7 @@ async function scrape() {
       for (const j of jobs) {
         if (seen.has(j.job_url)) continue;
         seen.add(j.job_url);
+        if (!shouldKeepJob(j)) continue;
         allJobs.push({
           ...j, source_platform: 'tier1_' + target.company.toLowerCase(),
           location: 'India',

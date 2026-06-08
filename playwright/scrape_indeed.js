@@ -3,6 +3,7 @@ const { chromium } = require('playwright-extra');
 const stealth = require('puppeteer-extra-plugin-stealth')();
 chromium.use(stealth);
 
+const { shouldKeepJob } = require('./job_filter.cjs');
 const SEARCHES = [
   { q: 'AI Operations Manager', l: 'Delhi, India', platform: 'indeed_india' },
   { q: 'AI Project Manager', l: 'Delhi, India', platform: 'indeed_india' },
@@ -69,6 +70,8 @@ async function scrape() {
       for (const j of jobs) {
         if (seen.has(j.job_id || j.job_url)) continue;
         seen.add(j.job_id || j.job_url);
+        if (!shouldKeepJob(j)) continue;
+        if (!shouldKeepJob(j)) continue;
         allJobs.push({ ...j, source_platform: s.platform, search_term: s.q });
       }
       await page.close();
